@@ -3,6 +3,9 @@ const Booking = require("../models/Bookingmodel");
 const Payment = require("../models/Paymentmodel");
 const generateOTP=require("../utils/generateOTP");
 const Ride = require("../models/Ridemodel");
+const {
+    releaseRidePayments
+} = require("../services/paymentService");
 
 const router = express.Router();
 
@@ -343,18 +346,23 @@ await ride.save();
 
         await booking.save();
 
-        await Payment.updateMany(
+  const payment = await Payment.findOne({
+    bookingId: booking._id
+});
 
-{
-    bookingId: booking._id,
-    status: "Held"
-},
+if (payment && payment.status === "Held") {
 
-{
-    status: "Refunded"
+    payment.status = "Refunded";
+
+    payment.paymentHistory.push({
+        status: "Refunded",
+        changedBy: "Passenger",
+        remarks: "Passenger cancelled before ride started",
+        changedAt: new Date()
+    });
+
+    await payment.save();
 }
-
-);
 
         res.status(200).json({
 
@@ -864,6 +872,33 @@ if (ride.status !== "Ongoing") {
 
         await booking.save();
 
+// ==============================
+// RELEASE THIS PASSENGER PAYMENT
+// ==============================
+
+const payment = await Payment.findOne({
+    bookingId: booking._id
+});
+
+if (
+    payment &&
+    payment.status === "Held" &&
+    !booking.disputeRaised
+) {
+
+    payment.status = "Released";
+    payment.releasedAt = new Date();
+
+    payment.paymentHistory.push({
+        status: "Released",
+        message: "Passenger completed ride",
+        changedAt: new Date()
+    });
+
+    await payment.save();
+}
+
+
 
         const pendingDrop = await Booking.find({
 
@@ -897,6 +932,7 @@ if (ride.status !== "Ongoing") {
 
 });
 
+
 if (pendingDrop.length === 0) {
 
     const ride = await Ride.findById(booking.rideId);
@@ -905,26 +941,8 @@ if (pendingDrop.length === 0) {
 
     await ride.save();
 
-    await Payment.updateMany(
-
-        {
-            bookingId: {
-                $in: await Booking.find({
-                    rideId: booking.rideId
-                }).distinct("_id")
-            },
-            status: "Held"
-        },
-
-        {
-            status: "Released"
-        }
-
-    );
-
+ await releaseRidePayments(ride._id);
 }
-
-
         // Check if every passenger has completed
  
         res.status(200).json({
@@ -1018,6 +1036,8 @@ if (disputeType === "PassengerAbsent") {
 
         await booking.save();
 
+
+
         res.status(200).json({
 
             message: "Absence report submitted",
@@ -1042,147 +1062,190 @@ if (disputeType === "PassengerAbsent") {
 
 
 router.put("/absence-response/:bookingId", async (req, res) => {
-
     try {
-
         const booking = await Booking.findById(req.params.bookingId);
 
         if (!booking) {
-
             return res.status(404).json({
                 message: "Booking not found"
             });
-
         }
 
-        
-
         const {
-
             respondedBy,
             decision,
             reason,
             message,
             evidence
-
         } = req.body;
 
         // Driver response
         if (respondedBy === "Driver") {
-
             booking.driverDecision = decision;
             booking.driverReason = reason;
             booking.driverMessage = message;
             booking.driverEvidence = evidence || "";
-
         }
-
         // Passenger response
         else if (respondedBy === "Passenger") {
-
             booking.passengerDecision = decision;
             booking.passengerReason = reason;
             booking.passengerMessage = message;
             booking.passengerEvidence = evidence || "";
-
         }
 
         booking.activityTimeline.push({
-
             action: "Response Submitted",
-
             by: respondedBy,
-
             message: `${respondedBy} selected ${decision}`
-
         });
 
         // ======================
         // AUTO RESOLUTION
         // ======================
 
+      
+
+        // Passenger accepts Driver's PassengerAbsent report
         if (
-
-            booking.driverDecision === "Agree"
-
-            &&
-
+            booking.disputeType === "PassengerAbsent" &&
             booking.passengerDecision === "Agree"
-
         ) {
-
             booking.disputeStatus = "Resolved";
-
             booking.resolvedBy = "System";
-
             booking.resolvedAt = new Date();
 
             booking.activityTimeline.push({
-
                 action: "Resolved",
-
                 by: "System",
-
-                message: "Both parties agreed."
-
+                message: "Passenger admitted absence."
             });
-
         }
 
-// ======================
-// REMOVE ABSENT USER FROM RIDE
-// ======================
+        // ======================
+        // REMOVE ABSENT USER FROM RIDE
+        // ======================
 
-if (
+        if (
+            booking.disputeStatus === "Resolved"
+            &&
+            booking.disputeType === "PassengerAbsent"
+        ) {
+            booking.bookingStatus = "NoShow";
+        }
 
-    booking.disputeStatus === "Resolved"
-
-    &&
-
-    booking.disputeType === "PassengerAbsent"
-
+        // Driver accepts Passenger's DriverAbsent report
+      if (
+    booking.disputeType === "DriverAbsent" &&
+    booking.driverDecision === "Agree"
 ) {
+    booking.bookingStatus = "Cancelled";
+    booking.disputeStatus = "Resolved";
+    booking.resolvedBy = "System";
+    booking.resolvedAt = new Date();
 
-    booking.bookingStatus = "NoShow";
-
-}
-
-
-if(
-booking.disputeType==="DriverAbsent" &&
-booking.driverDecision==="Agree"
-){
-
-booking.bookingStatus="Cancelled";
-
-booking.disputeStatus="Resolved";
-
+    booking.activityTimeline.push({
+        action: "Resolved",
+        by: "System",
+        message: "Driver admitted absence."
+    });
 }
 
         await booking.save();
 
+        const payment = await Payment.findOne({
+            bookingId: booking._id
+        });
+
+        // Release payment if passenger admitted absence
+        if (
+            payment &&
+            payment.status === "Held" &&
+            booking.disputeType === "PassengerAbsent" &&
+            booking.passengerDecision === "Agree"
+        ) {
+            payment.status = "Released";
+            payment.releasedAt = new Date();
+
+            payment.paymentHistory.push({
+                status: "Released",
+                changedBy: "System",
+                remarks: "Passenger admitted no-show",
+                changedAt: new Date()
+            });
+
+            await payment.save();
+        }
+
+        // [FIXED]: Refund payment if driver admitted absence
+        if (
+            payment &&
+            payment.status === "Held" &&
+            booking.disputeType === "DriverAbsent" &&
+            booking.driverDecision === "Agree"
+        ) {
+            payment.status = "Refunded";
+
+            payment.paymentHistory.push({
+                status: "Refunded",
+                changedBy: "System",
+                remarks: "Driver admitted absence",
+                changedAt: new Date()
+            });
+
+            await payment.save();
+        }
+
+        // Admin Escrow Logic for conflicting responses
+        if (
+            payment &&
+            payment.status === "Held"
+        ) {
+            // Passenger says driver was absent, driver denies it
+            if (
+                booking.disputeType === "DriverAbsent" &&
+                booking.driverDecision === "Disagree"
+            ) {
+                payment.status = "PendingAdmin";
+
+                payment.paymentHistory.push({
+                    status: "PendingAdmin",
+                    changedBy: "System",
+                    remarks: "Driver denied absence. Waiting for admin decision.",
+                    changedAt: new Date()
+                });
+
+                await payment.save();
+            }
+            // Driver says passenger was absent, passenger denies it
+            else if (
+                booking.disputeType === "PassengerAbsent" &&
+                booking.passengerDecision === "Disagree"
+            ) {
+                payment.status = "PendingAdmin";
+
+                payment.paymentHistory.push({
+                    status: "PendingAdmin",
+                    changedBy: "System",
+                    remarks: "Passenger denied absence. Waiting for admin decision.",
+                    changedAt: new Date()
+                });
+
+                await payment.save();
+            }
+        }
+
         res.status(200).json({
-
             message: "Response saved",
-
             booking
-
         });
 
-    }
-
-    catch (error) {
-
+    } catch (error) {
         res.status(500).json({
-
             message: error.message
-
         });
-
     }
-
 });
-
 
 
 

@@ -26,6 +26,10 @@ router.post("/create", async (req, res) => {
 
         } = req.body;
 
+const totalSeatsNum = Number(totalSeats);
+const availableSeatsNum = Number(availableSeats);
+const pricePerSeatNum = Number(pricePerSeat);        
+
 
         if (
 
@@ -51,7 +55,7 @@ router.post("/create", async (req, res) => {
 
 
 
-if (totalSeats <= 0) {
+if (totalSeatsNum <= 0) {
 
     return res.status(400).json({
 
@@ -61,7 +65,7 @@ if (totalSeats <= 0) {
 
 }
 
-if (availableSeats < 0) {
+if (availableSeatsNum < 0) {
 
     return res.status(400).json({
 
@@ -71,7 +75,7 @@ if (availableSeats < 0) {
 
 }
 
-if (availableSeats > totalSeats) {
+if (availableSeatsNum > totalSeatsNum) {
 
     return res.status(400).json({
 
@@ -81,7 +85,7 @@ if (availableSeats > totalSeats) {
 
 }
 
-if (pricePerSeat <= 0) {
+if (pricePerSeatNum <= 0) {
 
     return res.status(400).json({
 
@@ -212,22 +216,20 @@ if (existingRide) {
     });
 
 }
+const ride = new Ride({
 
+    driverId,
+    source,
+    destination,
+    date,
+    departureTime,
+    departureDateTime,
+    totalSeats: totalSeatsNum,
+    availableSeats: availableSeatsNum,
+    pricePerSeat: pricePerSeatNum,
+    carName
 
-        const ride = new Ride({
-
-            driverId,
-            source,
-            destination,
-            date,
-            departureTime,
-            departureDateTime,
-            totalSeats,
-            availableSeats,
-            pricePerSeat,
-            carName
-
-        });
+});
 
 
         await ride.save();
@@ -870,19 +872,26 @@ router.put("/cancel/:id", async (req, res) => {
 
     console.log("Booking IDs:", bookingIds);
 
-    const result = await Payment.updateMany(
-      {
-        bookingId: {
-          $in: bookingIds
-        },
-        status: "Held"
-      },
-      {
-        status: "Refunded"
-      }
-    );
+  const payments = await Payment.find({
+    bookingId: {
+        $in: bookingIds
+    },
+    status: "Held"
+});
 
-    console.log("Update Result:", result);
+for (const payment of payments) {
+
+    payment.status = "Refunded";
+
+    payment.paymentHistory.push({
+        status: "Refunded",
+        changedBy: "Driver",
+        remarks: "Ride cancelled by driver",
+        changedAt: new Date()
+    });
+
+    await payment.save();
+}
 
     return res.status(200).json({
       message: "Ride cancelled successfully"

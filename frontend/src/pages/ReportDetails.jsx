@@ -10,6 +10,36 @@ const ReportDetails = () => {
 
     const [report, setReport] = useState(null);
 
+    const decideDispute = async (winner) => {
+
+    try {
+
+        if (winner === "Passenger") {
+
+            await axios.put(
+                `http://localhost:4000/admin/approve-passenger/${report._id}`
+            );
+
+        } else {
+
+            await axios.put(
+                `http://localhost:4000/admin/approve-driver/${report._id}`
+            );
+
+        }
+
+        alert("Decision Saved");
+
+        fetchReport();
+
+    } catch (error) {
+
+        alert(error.response?.data?.message || "Error");
+
+    }
+
+};
+
     useEffect(() => {
 
         fetchReport();
@@ -205,15 +235,33 @@ const ReportDetails = () => {
 
             <hr />
 
-            <button
+           {report.disputeStatus === "Pending" && (
 
-                onClick={() => navigate(-1)}
+    <>
 
-            >
+        <button
+            onClick={() => decideDispute("Passenger")}
+        >
+            Approve Passenger
+        </button>
 
-                Back
+        <button
+            onClick={() => decideDispute("Driver")}
+        >
+            Approve Driver
+        </button>
 
-            </button>
+    </>
+
+)}
+
+
+
+<button
+    onClick={() => navigate(-1)}
+>
+    Back
+</button>
 
         </div>
 

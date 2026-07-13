@@ -94,17 +94,32 @@ router.post("/verify", async (req, res) => {
             });
         }
 
-        const commission = amount * 0.10;
-        const driverAmount = amount - commission;
+        // Using Math.round to avoid decimal inconsistencies
+        const platformFee = Math.round(amount * 0.10);
+        const driverAmount = amount - platformFee;
 
-       const payment = await Payment.create({
+     const payment = await Payment.create({
     bookingId,
     passengerId,
     driverId,
+
     amount,
-    commission,
+
+    platformFee,
     driverAmount,
-    status: "Held"
+
+    status: "Held",
+
+    releasedAt: null,
+
+    paymentHistory: [
+        {
+            status: "Held",
+            changedBy: "System",
+            remarks: "Payment held after successful booking",
+            changedAt: new Date()
+        }
+    ]
 });
 
         return res.status(200).json({
@@ -160,55 +175,50 @@ router.get("/driver/:id", async (req, res) => {
 });
 
 
+// ======================
+// RELEASE PAYMENT
+// ======================
 
 router.put("/release/:bookingId", async (req,res)=>{
 
     try{
 
         const payments = await Payment.find({
-
             bookingId:req.params.bookingId,
-
             status:"Held"
-
         });
 
         if(payments.length===0){
-
             return res.status(404).json({
-
                 message:"No held payments found"
-
             });
-
         }
 
-        for(const payment of payments){
+       for (const payment of payments) {
+ payment.status = "Released";
+payment.releasedAt = new Date();
 
-            payment.status="Released";
+payment.paymentHistory.push({
+    status: "Released",
+    changedBy: "System",
+    remarks: "Ride completed successfully",
+    changedAt: new Date()
+});
 
-            await payment.save();
-
-        }
+await payment.save();
+}
 
         return res.status(200).json({
-
             message:"Payments released",
-
             payments
-
         });
 
     }
 
     catch(error){
-
         return res.status(500).json({
-
             message:error.message
-
         });
-
     }
 
 });
@@ -242,6 +252,62 @@ router.put("/refund/:id", async (req, res) => {
             message: error.message
         });
     }
+});
+
+
+// ======================
+// DRIVER EARNINGS SUMMARY
+// ======================
+
+router.get("/driver-summary/:driverId", async (req, res) => {
+
+    try {
+
+        const payments = await Payment.find({
+            driverId: req.params.driverId
+        });
+
+        let totalEarnings = 0;
+        let heldAmount = 0;
+        let releasedAmount = 0;
+        let totalPlatformFee = 0;
+
+        payments.forEach(payment => {
+
+            // Excludes refunded entries entirely from active accounting balances
+            if (payment.status !== "Refunded") {
+                
+                totalPlatformFee += payment.platformFee;
+                totalEarnings += payment.driverAmount;
+
+                if (payment.status === "Held") {
+                    heldAmount += payment.driverAmount;
+                }
+
+                if (payment.status === "Released") {
+                    releasedAmount += payment.driverAmount;
+                }
+            }
+
+        });
+
+        res.status(200).json({
+            totalPayments: payments.length,
+            totalEarnings,
+            heldAmount,
+            releasedAmount,
+            totalPlatformFee,
+            payments
+        });
+
+    }
+
+    catch (error) {
+        res.status(500).json({
+            message: error.message
+        });
+    }
+
 });
 
 module.exports = router;

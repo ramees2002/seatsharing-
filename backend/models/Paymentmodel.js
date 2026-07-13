@@ -25,31 +25,58 @@ const paymentSchema = new mongoose.Schema({
         required:true
     },
 
-    commission:{
-        type:Number,
-        default:0
-    },
-
     driverAmount:{
         type:Number,
         default:0
     },
 
+    platformFee:{
+        type:Number,
+        default:0
+    },
+
+    releasedAt:{
+        type:Date,
+        default:null
+    },
+
     status:{
         type:String,
         enum:[
-            "Pending",
-            "Paid",
-            "Refunded",
             "Held",
-            "Released"
+            "Released",
+            "Refunded",
+            "PendingAdmin",
+            "Cancelled"
         ],
-        default:"Pending"
-    }
+        default:"Held"
+    },
 
+paymentHistory: [
+    {
+        status: {
+            type: String
+        },
+
+        changedBy: {
+            type: String,
+            default: "System"
+        },
+
+        remarks: {
+            type: String,
+            default: ""
+        },
+
+        changedAt: {
+            type: Date,
+            default: Date.now
+        }
+    }
+]
 },
 {
     timestamps:true
 });
 
-module.exports = mongoose.model("Payment",paymentSchema);
+module.exports = mongoose.model("Payment", paymentSchema);
