@@ -743,6 +743,48 @@ ride.status === "Full"
 
                         </p>
 
+
+{
+(() => {
+
+const ride = rides.find(r => r._id === selectedRide);
+
+if (!ride) return false;
+
+const startTime = new Date(ride.date);
+
+const [h, m] = ride.departureTime.split(":");
+
+startTime.setHours(Number(h));
+startTime.setMinutes(Number(m));
+startTime.setSeconds(0);
+
+const diff = startTime - new Date();
+
+return (
+    diff <= 10 * 60 * 1000 &&
+    ride.status !== "Completed" &&
+    ride.status !== "Cancelled"
+);
+
+})()
+
+&&
+
+(
+
+<p>
+
+<b>Passenger Phone :</b>
+
+{p.phone}
+
+</p>
+
+)
+}
+
+
                         <p>
 Status :
 {p.bookingStatus}
@@ -966,6 +1008,47 @@ Verify Drop OTP
                           Seats : {p.seatsBooked}
 
                         </p>
+
+{
+(() => {
+
+const ride = rides.find(r => r._id === selectedRide);
+
+if (!ride) return false;
+
+const startTime = new Date(ride.date);
+
+const [h, m] = ride.departureTime.split(":");
+
+startTime.setHours(Number(h));
+startTime.setMinutes(Number(m));
+startTime.setSeconds(0);
+
+const diff = startTime - new Date();
+
+return (
+    diff <= 10 * 60 * 1000 &&
+    ride.status !== "Completed" &&
+    ride.status !== "Cancelled"
+);
+
+})()
+
+&&
+
+(
+
+<p>
+
+<b>Passenger Phone :</b>
+
+{p.phone}
+
+</p>
+
+)
+}
+
 
 {
 p.disputeRaised &&

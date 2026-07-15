@@ -251,6 +251,48 @@ const MyBookings = () => {
 
             </p>
 
+{
+(() => {
+
+if (!booking.rideId) return false;
+
+const startTime = new Date(booking.rideId.date);
+
+const [h, m] = booking.rideId.departureTime.split(":");
+
+startTime.setHours(Number(h));
+startTime.setMinutes(Number(m));
+startTime.setSeconds(0);
+
+const diff = startTime - new Date();
+
+return (
+diff <= 10 * 60 * 1000 &&
+booking.bookingStatus !== "Cancelled" &&
+booking.bookingStatus !== "Completed" &&
+booking.bookingStatus !== "NoShow" &&
+booking.rideId?.status !== "Completed" &&
+booking.rideId?.status !== "Cancelled" &&
+booking.rideId?.driverId?.phone
+);
+
+})()
+
+&&
+
+(
+
+<p>
+
+<b>Driver Phone :</b>
+
+{booking.rideId.driverId.phone}
+
+</p>
+
+)
+}
+
             {/* PICKUP OTP */}
 
             {

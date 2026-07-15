@@ -184,9 +184,13 @@ router.get("/my-bookings/:id", async (req, res) => {
 
         })
 
-        .populate("rideId")
-
-        .populate("passengerId");
+       .populate({
+    path: "rideId",
+    populate: {
+        path: "driverId"
+    }
+})
+.populate("passengerId");
 
         res.status(200).json({
 

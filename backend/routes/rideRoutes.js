@@ -270,9 +270,9 @@ router.get("/", async (req, res) => {
 
         const rides = await Ride.find()
 
-            .populate("driverId");
+            .populate("driverId", "Name name phone")
 
-
+            .sort({ createdAt: -1 });
 
         res.status(200).json({
 
@@ -297,6 +297,7 @@ router.get("/", async (req, res) => {
     }
 
 });
+
 
 
 
@@ -604,6 +605,8 @@ const passengers = bookings.map((b) => ({
         "Unknown User",
 
     userId: b.passengerId?._id,
+
+    phone: b.passengerId?.phone,
 
     seatsBooked: b.seatsBooked,
 

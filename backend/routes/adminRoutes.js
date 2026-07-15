@@ -974,4 +974,79 @@ router.get("/platform-earnings", async (req, res) => {
 });
 
 
+
+// =====================================
+// ADMIN VIEW RIDE PASSENGERS
+// =====================================
+
+router.get("/ride-passengers/:rideId", async (req, res) => {
+
+    try {
+
+        const ride = await Ride.findById(req.params.rideId)
+            .populate("driverId", "Name name phone");
+
+        if (!ride) {
+
+            return res.status(404).json({
+                message: "Ride not found"
+            });
+
+        }
+
+        const bookings = await Booking.find({
+            rideId: ride._id
+        }).populate("passengerId", "Name name phone");
+
+        const passengers = bookings.map((b) => ({
+
+            bookingId: b._id,
+
+            name:
+                b.passengerId?.Name ||
+                b.passengerId?.name ||
+                "Unknown",
+
+            phone:
+                b.passengerId?.phone || "-",
+
+            seatsBooked: b.seatsBooked,
+
+            bookingStatus: b.bookingStatus
+
+        }));
+
+        res.status(200).json({
+
+            driver: {
+
+                name:
+                    ride.driverId?.Name ||
+                    ride.driverId?.name ||
+                    "Unknown",
+
+                phone:
+                    ride.driverId?.phone || "-"
+
+            },
+
+            passengers
+
+        });
+
+    }
+
+    catch (error) {
+
+        res.status(500).json({
+
+            message: error.message
+
+        });
+
+    }
+
+});
+
+
 module.exports = router;
