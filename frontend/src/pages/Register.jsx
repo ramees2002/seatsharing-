@@ -10,8 +10,7 @@ const [Name, setName] = useState("");
 const [email, setEmail] = useState("");
 const [password, setPassword] = useState("");
 const [phone, setPhone] = useState("");
-const [vehicleNumber, setVehicleNumber] = useState("");
-const [vehicleType, setVehicleType] = useState("");
+
 
 const registerUser = async (e) => {
 
@@ -29,8 +28,7 @@ Name,
 email,
 password,
 phone,
-vehicleNumber,
-vehicleType
+
 
 }
 
@@ -120,69 +118,9 @@ required
 
 />
 
-<input
 
-type="text"
 
-placeholder="Vehicle Number"
 
-value={vehicleNumber}
-
-onChange={(e)=>setVehicleNumber(e.target.value)}
-
-/>
-
-<select
-
-value={vehicleType}
-
-onChange={(e)=>setVehicleType(e.target.value)}
-
->
-
-<option value="">
-
-Select Vehicle Type
-
-</option>
-
-<option value="Sedan">
-
-Sedan
-
-</option>
-
-<option value="SUV">
-
-SUV
-
-</option>
-
-<option value="Hatchback">
-
-Hatchback
-
-</option>
-
-<option value="MPV">
-
-MPV
-
-</option>
-
-<option value="Electric">
-
-Electric
-
-</option>
-
-<option value="Luxury">
-
-Luxury
-
-</option>
-
-</select>
 
 <button type="submit">
 

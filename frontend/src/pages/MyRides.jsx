@@ -4,7 +4,19 @@ import { useNavigate } from "react-router";
 
 const MyRides = () => {
 
+  
+
   const user = JSON.parse(localStorage.getItem("user"));
+
+console.log(user);
+console.log(user?.role);
+
+  if (!user) {
+    return <h2>Please login first.</h2>;
+}
+
+
+
   const navigate=useNavigate();
 
   const [rides, setRides] = useState([]);
@@ -398,7 +410,20 @@ r.status === "Ongoing"
 
       </h1>
 
+{
+    rides.length > 0 && (
 
+        <button
+            onClick={() => navigate("/driver-earnings")}
+            style={{
+                marginBottom: "20px"
+            }}
+        >
+            💰 Driver Earnings
+        </button>
+
+    )
+}
 
       <div style={{ marginBottom: "20px" }}>
 

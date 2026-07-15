@@ -2,11 +2,23 @@ import React from "react";
 import { BrowserRouter, Routes, Route } from "react-router";
 import ReportDetails from "./pages/ReportDetails";
 
+import PlatformEarnings from "./pages/PlatformEarnings";
+
+import AdminDashboard from "./pages/AdminDashboard";
+import AdminReports from "./pages/AdminReports";
+import AdminReportDetails from "./pages/AdminReportDetails";
+import AdminPayments from "./pages/AdminPayments";
+import AdminRides from "./pages/AdminRides";
+import AdminRideDetails from "./pages/AdminRideDetails";
+import AdminUsers from "./pages/AdminUsers";
+
 
 
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import AdminReports from "./pages/AdminReports";
+
+
+import DriverEarnings from "./pages/DriverEarnings";
 
 import DriverAbsent from "./pages/DriverAbsent";
 import PassengerAbsent from "./pages/PassengerAbsent";
@@ -95,10 +107,79 @@ element={<ReportDetails/>}
         />
 
 
+{/* =========================
+    ADMIN DASHBOARD
+========================= */}
+
 <Route
-path="/admin-reports"
-element={<AdminReports/>}
+    path="/admin"
+    element={<AdminDashboard />}
 />
+
+<Route
+    path="/admin/dashboard"
+    element={<AdminDashboard />}
+/>
+
+{/* =========================
+    REPORTS
+========================= */}
+
+<Route
+    path="/admin/reports"
+    element={<AdminReports />}
+/>
+
+<Route
+    path="/admin/report/:id"
+    element={<AdminReportDetails />}
+/>
+
+{/* =========================
+    PAYMENTS
+========================= */}
+
+<Route
+    path="/admin/payments"
+    element={<AdminPayments />}
+/>
+
+{/* =========================
+    RIDES
+========================= */}
+
+<Route
+    path="/admin/rides"
+    element={<AdminRides />}
+/>
+
+<Route
+    path="/admin/rides/:rideId"
+    element={<AdminRideDetails />}
+/>
+
+{/* =========================
+    USERS
+========================= */}
+
+<Route
+    path="/admin/users"
+    element={<AdminUsers />}
+/>
+
+
+<Route
+    path="/admin/platform-earnings"
+    element={<PlatformEarnings />}
+/>
+
+<Route
+    path="/driver-earnings"
+    element={<DriverEarnings />}
+/>
+
+
+
 
 
 <Route path="/driver-absent/:bookingId" element={<DriverAbsent />} />

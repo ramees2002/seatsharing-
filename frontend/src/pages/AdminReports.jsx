@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import axios from "axios";
 import { useNavigate } from "react-router";
 
@@ -24,15 +24,11 @@ const AdminReports = () => {
 
             setReports(res.data.reports);
 
-        }
-
-        catch (error) {
+        } catch (error) {
 
             console.log(error);
 
-        }
-
-        finally {
+        } finally {
 
             setLoading(false);
 
@@ -42,7 +38,7 @@ const AdminReports = () => {
 
     if (loading) {
 
-        return <h2>Loading Reports...</h2>;
+        return <h2>Loading...</h2>;
 
     }
 
@@ -50,195 +46,66 @@ const AdminReports = () => {
 
         <div className="admin-reports">
 
-            <h1>Dispute Reports</h1>
+            <h1>All Dispute Reports</h1>
 
             {
-
                 reports.length === 0 ?
 
-                    (
-
-                        <h3>No Reports Found</h3>
-
-                    )
+                    <h3>No Reports Found</h3>
 
                     :
 
-                    (
+                    reports.map((report) => (
 
-                        reports.map((report) => (
+                        <div
+                            className="report-card"
+                            key={report._id}
+                        >
 
-                            <div
-                                key={report._id}
-                                className="report-card"
+                            <h3>
+                                {report.rideId?.source}
+                                {" → "}
+                                {report.rideId?.destination}
+                            </h3>
+
+                            <p>
+                                <strong>Passenger:</strong>{" "}
+                                {report.passengerId?.Name}
+                            </p>
+
+                            <p>
+                                <strong>Driver:</strong>{" "}
+                                {report.rideId?.driverId?.Name}
+                            </p>
+
+                            <p>
+                                <strong>Report Type:</strong>{" "}
+                                {report.disputeType}
+                            </p>
+
+                            <p>
+                                <strong>Reported By:</strong>{" "}
+                                {report.reportedBy}
+                            </p>
+
+                            <p>
+                                <strong>Status:</strong>{" "}
+                                {report.disputeStatus}
+                            </p>
+
+                            <button
+                                onClick={() =>
+                                    navigate(
+                                        `/admin/report/${report._id}`
+                                    )
+                                }
                             >
+                                View Details
+                            </button>
 
-                                <h2>
+                        </div>
 
-                                    {report.disputeType || "Dispute"}
-
-                                </h2>
-
-                                <p>
-
-                                    <b>Reported By :</b>
-
-                                    {" "}
-
-                                    {report.reportedBy}
-
-                                </p>
-
-                                <p>
-
-                                    <b>Passenger :</b>
-
-                                    {" "}
-
-                                    {
-
-                                        report.passengerId?.Name ||
-
-                                        report.passengerId?.email
-
-                                    }
-
-                                </p>
-
-                                <p>
-
-                                    <b>Driver :</b>
-
-                                    {" "}
-
-                                    {
-
-                                        report.rideId?.driverId?.Name ||
-
-                                        report.rideId?.driverId?.email
-
-                                    }
-
-                                </p>
-
-                                <p>
-
-                                    <b>Reason :</b>
-
-                                    {" "}
-
-                                    {report.reportReason}
-
-                                </p>
-
-                                <p>
-
-                                    <b>Description :</b>
-
-                                    {" "}
-
-                                    {report.reportDescription}
-
-                                </p>
-
-                                <p>
-
-                                    <b>Passenger Decision :</b>
-
-                                    {" "}
-
-                                    {
-
-                                        report.passengerDecision ||
-
-                                        "Not Responded"
-
-                                    }
-
-                                </p>
-
-                                <p>
-
-                                    <b>Passenger Message :</b>
-
-                                    {" "}
-
-                                    {
-
-                                        report.passengerMessage ||
-
-                                        "-"
-
-                                    }
-
-                                </p>
-
-                                <p>
-
-                                    <b>Driver Decision :</b>
-
-                                    {" "}
-
-                                    {
-
-                                        report.driverDecision ||
-
-                                        "Not Responded"
-
-                                    }
-
-                                </p>
-
-                                <p>
-
-                                    <b>Driver Message :</b>
-
-                                    {" "}
-
-                                    {
-
-                                        report.driverMessage ||
-
-                                        "-"
-
-                                    }
-
-                                </p>
-
-                                <p>
-
-                                    <b>Status :</b>
-
-                                    {" "}
-
-                                    {report.disputeStatus}
-
-                                </p>
-
-                                <button
-
-                                    onClick={() =>
-
-                                        navigate(
-
-                                            `/admin/report/${report._id}`
-
-                                        )
-
-                                    }
-
-                                >
-
-                                    Open Report
-
-                                </button>
-
-                            </div>
-
-                        ))
-
-                    )
-
+                    ))
             }
 
         </div>

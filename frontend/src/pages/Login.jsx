@@ -54,13 +54,21 @@ const Login = () => {
 
       );
 
-      alert(
+   alert(
+    res.data.message
+);
 
-        res.data.message
 
-      );
+if (res.data.user.role === "admin") {
 
-      navigate("/dashboard");
+    navigate("/admin");
+
+}
+else {
+
+    navigate("/dashboard");
+
+}
 
     }
 

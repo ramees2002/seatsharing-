@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useState,useEffect} from "react";
 import axios from "axios";
 
 const CreateRide = () => {
 
   const user = JSON.parse(localStorage.getItem("user"));
 
+  const [userProfile, setUserProfile] = useState(null);
   const [ride, setRide] = useState({
 
     source: "",
@@ -23,6 +24,34 @@ const CreateRide = () => {
   });
 
 
+useEffect(() => {
+
+    fetchUserProfile();
+
+}, []);
+
+const fetchUserProfile = async () => {
+
+    try {
+
+        const res = await axios.get(
+
+            `http://localhost:4000/users/profile/${user._id}`
+
+        );
+
+        setUserProfile(res.data.user);
+
+    }
+
+    catch (error) {
+
+        console.log(error);
+
+    }
+
+};
+
   const handleChange = (e) => {
 
     setRide({
@@ -36,9 +65,27 @@ const CreateRide = () => {
   };
 
 
-  const handleSubmit = async (e) => {
+ const handleSubmit = async (e) => {
 
     e.preventDefault();
+
+    if (
+
+        !userProfile?.vehicleNumber ||
+
+        !userProfile?.vehicleType
+
+    ) {
+
+        alert(
+
+            "Please add your Vehicle Number and Vehicle Type in Profile before creating a ride."
+
+        );
+
+        return;
+
+    }
 
     try {
 
@@ -88,6 +135,48 @@ const CreateRide = () => {
     <div className="ride-container">
 
       <h2>Create Ride</h2>
+
+      {
+
+userProfile &&
+
+<div
+
+style={{
+
+border:"1px solid gray",
+
+padding:"10px",
+
+marginBottom:"20px"
+
+}}
+
+>
+
+<p>
+
+<b>Vehicle Number :</b>
+
+{" "}
+
+{userProfile.vehicleNumber || "Not Added"}
+
+</p>
+
+<p>
+
+<b>Vehicle Type :</b>
+
+{" "}
+
+{userProfile.vehicleType || "Not Added"}
+
+</p>
+
+</div>
+
+}
 
       <form onSubmit={handleSubmit}>
 
